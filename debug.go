@@ -409,6 +409,12 @@ func (l *State) checkUpValue(f, upValueCount int) int {
 	return n
 }
 
+func checkStack(l, l1 *State, n int) {
+	if l != l1 && !l1.CheckStack(n) {
+		l.runtimeError("stack overflow")
+	}
+}
+
 func threadArg(l *State) (int, *State) {
 	if l.IsThread(1) {
 		return 1, l.ToThread(1)
@@ -478,6 +484,7 @@ var debugLibrary = []RegistryFunction{
 			l.PushString("external hook")
 		} else {
 			hookTable(l)
+			checkStack(l, l1, 1)
 			l1.PushThread()
 			//			XMove(l1, l, 1)
 			panic("XMove not implemented yet")
@@ -539,6 +546,7 @@ var debugLibrary = []RegistryFunction{
 			l.PushValue(-1)
 			l.SetMetaTable(-2)
 		}
+		checkStack(l, l1, 1)
 		l1.PushThread()
 		//	 	XMove(l1, l, 1)
 		panic("XMove not yet implemented")
