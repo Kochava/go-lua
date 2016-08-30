@@ -120,15 +120,16 @@ var tableLibrary = []RegistryFunction{
 		if i > e {
 			return 0
 		}
-		n := e - i + 1
-		if n <= 0 || !l.CheckStack(n) {
+		n := uint(e) - uint(i) // number of elements minus 1
+		if n > uint(maxInt-10) || !l.CheckStack(int(n+1)) {
 			Errorf(l, "too many results to unpack")
 			panic("unreachable")
 		}
+		n++
 		for l.RawGetInt(1, i); i < e; i++ {
 			l.RawGetInt(1, i+1)
 		}
-		return n
+		return int(n)
 	}},
 	{"remove", func(l *State) int {
 		CheckType(l, 1, TypeTable)
