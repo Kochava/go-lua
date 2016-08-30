@@ -330,6 +330,7 @@ func (l *State) callHook(ci *callInfo) {
 func (l *State) adjustVarArgs(p *prototype, argCount int) int {
 	fixedArgCount := p.parameterCount
 	l.assert(argCount >= fixedArgCount)
+	l.checkStack(p.maxStackSize)
 	// move fixed parameters to final position
 	fixed := l.top - argCount // first fixed argument
 	base := l.top             // final position of first argument
