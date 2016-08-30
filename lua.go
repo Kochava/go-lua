@@ -112,10 +112,12 @@ const Signature = "\033Lua"
 const MinStack = 20
 
 const (
-	VersionMajor  = 5
-	VersionMinor  = 2
-	VersionNumber = 502
-	VersionString = "Lua " + string('0'+VersionMajor) + "." + string('0'+VersionMinor)
+	VersionMajor   = 5
+	VersionMinor   = 2
+	VersionRelease = 4
+	VersionNumber  = 502
+	VersionString  = "Lua " + string('0'+VersionMajor) + "." + string('0'+VersionMinor)
+	ReleaseString  = VersionString + "." + string('0'+VersionRelease)
 )
 
 // A RegistryFunction is used for arrays of functions to be registered by
