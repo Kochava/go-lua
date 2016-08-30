@@ -2,11 +2,26 @@ package lua
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 )
+
+var benchFibN = 20
+
+func init() {
+	nstr := os.Getenv("BENCH_LUA_FIB_N")
+	if nstr == "" {
+		return
+	}
+
+	if i, err := strconv.Atoi(nstr); err == nil && i >= 0 {
+		benchFibN = i
+	}
+}
 
 func testString(t *testing.T, s string)  { testStringHelper(t, s, false) }
 func traceString(t *testing.T, s string) { testStringHelper(t, s, true) }
@@ -136,7 +151,7 @@ func BenchmarkSort2(b *testing.B) {
 	benchmarkSort(b, "i = 0; table.sort(a, function(x,y) i=i+1; return y<x end)")
 }
 
-func BenchmarkFibonnaci(b *testing.B) {
+func BenchmarkFibonacci_Loop(b *testing.B) {
 	l := NewState()
 	s := `return function(n)
 			if n == 0 then
@@ -156,10 +171,48 @@ func BenchmarkFibonnaci(b *testing.B) {
 	if err := l.ProtectedCall(0, 1, 0); err != nil {
 		b.Error(err.Error())
 	}
-	l.PushInteger(b.N)
+
 	b.ResetTimer()
-	if err := l.ProtectedCall(1, 1, 0); err != nil {
+	for i := b.N; i > 0; i-- {
+		l.PushValue(-1)
+		l.PushInteger(benchFibN)
+		if err := l.ProtectedCall(1, 0, 0); err != nil {
+			b.Error(err.Error())
+		}
+	}
+}
+
+func BenchmarkFibonacci_Tail(b *testing.B) {
+	// NOTE: The tailcall version of the Fibonacci benchmark will actually run without error
+	// regardless of tailcall fixes. This is because it will do wildly incorrect things like
+	// begin executing the incorrect function when performing a tailcall. This, in turn,
+	// produces some unusual timings that're faster than the looped version but also just plain
+	// incorrect.
+	l := NewState()
+	s := `local function fibr(n0, n1, c)
+			if c == 0 then
+				return 0
+			elseif c == 1 then
+				return n1
+			end
+			return fibr(n1, n0+n1, c-1) -- TC
+		end
+
+		return function(n)
+			return fibr(0, 1, n) -- TC
+		end`
+	LoadString(l, s)
+	if err := l.ProtectedCall(0, 1, 0); err != nil {
 		b.Error(err.Error())
+	}
+
+	b.ResetTimer()
+	for i := b.N; i > 0; i-- {
+		l.PushValue(-1)
+		l.PushInteger(benchFibN)
+		if err := l.ProtectedCall(1, 0, 0); err != nil {
+			b.Error(err.Error())
+		}
 	}
 }
 
